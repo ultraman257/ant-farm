@@ -11,7 +11,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-Bstatic,--whole-archi
 
 find_package(FLTK REQUIRED NO_MODULE)
 
-add_executable(simulite WIN32 MACOSX_BUNDLE main.cpp)
+add_executable(simulite WIN32 MACOSX_BUNDLE main.cpp Person.cpp)
 
 
 target_link_libraries(simulite fltk)

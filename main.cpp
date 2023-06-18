@@ -7,8 +7,12 @@
 #include <random>
 #include "Person.h"
 #include "Building.h"
+#include "BuildingManager.h"
+#include "RequirementEnum.h"
 
-const int pCount = 100;
+const int pCount = 1;
+
+buildingLocation *locations[30];
 
 Person *p[pCount];
 Fl_Button *pBox[pCount];
@@ -17,12 +21,16 @@ std::vector<std::vector<int>> houseArray;
 
 Fl_Double_Window *window;
 
+BuildingManager *bm;
+
 // This is the function the animates the points and runs what happens each frame.
 void animateThread(void *data) {
 
     // For every person run the update function, telling them to move towards their waypoint.
     for (auto & i : p) {
 
+        // Check if the current location meets any requirments.
+        i->checkLocation();
         // Supplying 0,0 as the function used to accept a location to move to.
         i->moveTo();
     }
@@ -34,13 +42,16 @@ void animateThread(void *data) {
 
 }
 
-
 // The ain application thread
 int main(int argc, char **argv) {
 
+
+
+    bm = new BuildingManager();
+
     // Populate the P[] array with people objects.
     for (int i = 0; i < pCount; ++i) {
-        p[i] = new Person();
+        p[i] = new Person(bm);
         p[i]->setId(i);
     }
 
@@ -53,8 +64,22 @@ int main(int argc, char **argv) {
 
     // Make an building object, we do this so we can later use if for collisions etc hopefully.
     Building* storeBuilding = Building(740, 900, 250, 100, "Shop", FL_CYAN).getSelf();
+    Building* storeExtraBuilding = Building(500, 60, 250, 100, "Shop", FL_CYAN).getSelf();
     Building* officeBuilding = Building(850,100,100,100,"Office", FL_RED).getSelf();
-    Building* galleryBuilding = Building(870,220,80,140,"Gallery", FL_DARK_GREEN).getSelf();
+    Building* galleryBuilding = Building(870,220,80,140,"Gallery", FL_DARK_BLUE).getSelf();
+    Building* office2Building = Building(200,400,80,140,"Office", FL_DARK_GREEN).getSelf();
+    Building* theareBuilding = Building(870,560,80,140,"Theatre", FL_DARK_YELLOW).getSelf();
+
+    bm->addBuilding(storeBuilding, SUPPLIES);
+    bm->addBuilding(storeExtraBuilding, SUPPLIES);
+    bm->addBuilding(officeBuilding, MONEY);
+//    bm->addBuilding(office2Building, MONEY);
+    bm->addBuilding(galleryBuilding, ENTERTAINMENT);
+//    bm->addBuilding(theareBuilding, ENTERTAINMENT);
+
+    bm->printBuildings();
+
+
 
     // Let's make a few buildings.
     Fl_Box *storeBox = storeBuilding->getBuilding();
@@ -97,7 +122,7 @@ int main(int argc, char **argv) {
             }
 
             int x = ((t*30) + 30);
-            int y = ((i * 32) + 500);
+            int y = ((i * 32) + 650);
 
             houseArray.push_back({x, y});
 
@@ -127,8 +152,7 @@ int main(int argc, char **argv) {
         p[i]->goHome(houseArray[homeNum][0], houseArray[homeNum][1]);
         p[i]->setBox(pBox[i]);
 
-        p[i]->setPathFindX(dis(gen));
-        p[i]->setPathFindY(dis(gen));
+        p[i]->setPathFind(dis(gen), dis(gen));
 
         p[i]->getBox()->position(40, 80);
     }
@@ -136,7 +160,8 @@ int main(int argc, char **argv) {
     window->end();
     window->show(argc, argv);
 
-    Fl::add_timeout(0.1, animateThread, window);
+    Fl::add_timeout(0.01, animateThread, window);
+
     Fl::visual(FL_DOUBLE|FL_INDEX);
 
     return Fl::run();
